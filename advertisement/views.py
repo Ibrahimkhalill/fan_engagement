@@ -9,7 +9,7 @@ from .serializers import  AdvertisementSerializer
 
 # Advertisement Views
 @api_view(['GET', 'POST'])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated])
 def advertisement_list_create(request):
     if request.method == 'GET':
         advertisements = Advertisement.objects.all()

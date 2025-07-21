@@ -54,7 +54,7 @@ INSTALLED_APPS = [
 ]
 
 # CORS_ALLOWED_ORIGINS = [
-#     "http://192.168.10.12:5173",  # Frontend IP
+#     "http://10.10.12.58:3000",  # Frontend IP
 # ]
 
 CORS_ALLOW_CREDENTIALS = True

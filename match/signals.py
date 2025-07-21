@@ -1,7 +1,7 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import Match
-from voting.models import Voting,Fan
+from voting.models import Voting, Fan
 from django.db.models import Count
 from django.db import models
 from django.db import transaction
@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 @receiver(post_save, sender=Match)
 def update_voting_points(sender, instance, created, raw, **kwargs):
-    # Skip if raw (e.g., fixtures) or not finished
+    # Skip if raw (e.g., fixtures), not finished, or no winner
     if raw or instance.status != 'finished' or not instance.winner:
         return
 
@@ -37,14 +37,21 @@ def update_voting_points(sender, instance, created, raw, **kwargs):
             for vote in Voting.objects.filter(match=instance):
                 points = 0
                 if vote.who_will_win == instance.winner:
-                    points = 1 if vote.who_will_win == majority_team else 1
+                    points += 1  # 1 point for correct winner
+                    if vote.who_will_win == majority_team:
+                        points += 1  # 1 additional point for majority vote
+                    if (vote.goal_difference is not None and 
+                        instance.goal_difference is not None and 
+                        vote.goal_difference == instance.goal_difference):
+                        points += 1  # 1 additional point for correct goal difference
+                
                 vote.points_earned = points
-                vote.save()
+                vote.save(update_fields=['points_earned'])
 
                 # Update Fan points
                 fan, created = Fan.objects.get_or_create(user=vote.user)
                 fan.points += points
-                fan.save()
+                fan.save(update_fields=['points'])
 
             logger.info(f"Points updated for match {instance.id} ({instance.team_a} vs {instance.team_b})")
     except Exception as e:

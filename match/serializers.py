@@ -29,5 +29,5 @@ class MatchSerializer(serializers.ModelSerializer):
             'id', 'team_a', 'team_b','team_a_pics','team_b_pics',
             'time', 'date',
             'selected_players', 'selected_players_ids',
-            'winner', 'status', 'win_name'
+            'winner', 'status', 'win_name', "goal_difference"
         ]
