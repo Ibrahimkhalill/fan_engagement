@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: fan_engagement
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: daphne fan_engagement.asgi:application
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: fan_engagement.settings
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
