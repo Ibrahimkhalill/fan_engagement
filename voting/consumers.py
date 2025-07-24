@@ -31,3 +31,24 @@ class VoteConsumer(AsyncWebsocketConsumer):
     async def vote_update(self, event):
         # Send updated vote stats to WebSocket clients
         await self.send(text_data=json.dumps(event['stats']))
+        
+        
+class MatchStatusConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.match_id = self.scope['url_route']['kwargs']['match_id']
+        self.group_name = f'match_status_{self.match_id}'
+
+        # Join match status group
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        # Leave the match status group
+        await self.channel_layer.group_discard(self.group_name, self.channel_name)
+
+    async def match_status_update(self, event):
+        # Send updated match status to WebSocket clients
+        await self.send(text_data=json.dumps({
+            "type": "match_status_update",
+            "data": event["data"]
+        }))

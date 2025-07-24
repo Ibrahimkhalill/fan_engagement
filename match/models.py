@@ -29,6 +29,13 @@ class Match(models.Model):
         blank=True,null=True
     )
     win_name = models.CharField(max_length=100, blank=True, null=True)  # Stores winning team name
+    
+    # Add this field to store match timezone as a string, default to UTC
+    match_timezone = models.CharField(
+        max_length=50,
+        default='UTC',
+        help_text='Timezone of the match (e.g., Asia/Dhaka, America/New_York)'
+    )
 
     def __str__(self):
         return f"{self.team_a} vs {self.team_b} on {self.date}"

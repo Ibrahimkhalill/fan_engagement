@@ -25,21 +25,21 @@ def update_voting_points(sender, instance, created, raw, **kwargs):
                 draw_votes=Count('pk', filter=models.Q(who_will_win='draw'))
             )
 
-            # Determine majority vote
+            # Determine minority vote (fewest votes)
             vote_counts = {
                 'team_a': votes['team_a_votes'],
                 'team_b': votes['team_b_votes'],
                 'draw': votes['draw_votes']
             }
-            majority_team = max(vote_counts, key=vote_counts.get)
+            minority_team = min(vote_counts, key=vote_counts.get)
 
             # Update points for each vote
             for vote in Voting.objects.filter(match=instance):
                 points = 0
                 if vote.who_will_win == instance.winner:
                     points += 1  # 1 point for correct winner
-                    if vote.who_will_win == majority_team:
-                        points += 1  # 1 additional point for majority vote
+                    if vote.who_will_win == minority_team:
+                        points += 1  # 1 additional point for minority vote
                     if (vote.goal_difference is not None and 
                         instance.goal_difference is not None and 
                         vote.goal_difference == instance.goal_difference):
@@ -53,7 +53,7 @@ def update_voting_points(sender, instance, created, raw, **kwargs):
                 fan.points += points
                 fan.save(update_fields=['points'])
 
-            logger.info(f"Points updated for match {instance.id} ({instance.team_a} vs {instance.team_b})")
+            logger.info(f"Points updated for match {instance.id} ({instance.team_a} vs {instance.team_b}) - Winner: {instance.winner}, Minority: {minority_team}, Votes: {votes}")
     except Exception as e:
         logger.error(f"Error updating points for match {instance.id}: {str(e)}")
         raise  # Re-raise to ensure transaction rolls back

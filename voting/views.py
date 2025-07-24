@@ -97,6 +97,14 @@ def vote_create(request):
     except ValueError:
         return Response({"error": "Invalid Match ID"}, status=status.HTTP_400_BAD_REQUEST)
 
+    # ✅ Check match status before voting
+    try:
+        match = Match.objects.get(id=match_id)
+        if match.status == 'finished':
+            return Response({"error": "Voting is closed. The match has already finished."}, status=status.HTTP_403_FORBIDDEN)
+    except Match.DoesNotExist:
+        return Response({"error": "Match not found"}, status=status.HTTP_404_NOT_FOUND)
+
     serializer = VotingSerializer(data=request.data, context={'request': request})
     if serializer.is_valid():
         serializer.save()
