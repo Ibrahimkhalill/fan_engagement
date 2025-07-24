@@ -67,6 +67,11 @@ CHANNEL_LAYERS = {
     },
 }
 
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://fan-engagement-1.onrender.com',
+]
+
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
