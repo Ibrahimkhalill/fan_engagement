@@ -71,10 +71,7 @@ class VotingSerializer(serializers.ModelSerializer):
             data['who_will_win'] = 'team_b'
         elif who_will_win == 'Draw':
             data['who_will_win'] = 'draw'
-        else:
-            raise serializers.ValidationError({
-                "who_will_win": f"Must be '{match.team_a}', '{match.team_b}', or 'Draw'."
-            })
+        
         
         return super().to_internal_value(data)
 

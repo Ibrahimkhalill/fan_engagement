@@ -8,7 +8,8 @@ from .serializers import  MatchSerializer
 from datetime import datetime, time, timedelta
 from django.utils import timezone
 from django.db import models
-
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 # Match Views
 @api_view(['GET', 'POST'])
@@ -42,6 +43,16 @@ def match_detail(request, pk):
         serializer = MatchSerializer(match, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
+            group_name = "match_status_all"
+            channel_layer = get_channel_layer()
+
+            async_to_sync(channel_layer.group_send)(
+                group_name,
+                {
+                    "type": "match_status_update",
+                    "match_id": match.id,
+                }
+            )    
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     

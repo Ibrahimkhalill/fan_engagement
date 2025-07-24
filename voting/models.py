@@ -9,7 +9,7 @@ from match.models import Match
 class Voting(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, blank=True,null=True)
     match = models.ForeignKey(Match, on_delete=models.CASCADE,blank=True,null=True)  # Link to Match
-    who_will_win = models.CharField(max_length=100, choices=[('team_a', 'Team A'), ('team_b', 'Team B'), ('draw','Draw')])  # Team A or B
+    who_will_win = models.CharField(max_length=100, choices=[('team_a', 'Team A'), ('team_b', 'Team B'), ('draw','Draw')], blank=True, null=True)  # Team A or B
     goal_difference = models.IntegerField(default=0)  # Positive for Team A, negative for Team B
     selected_players = models.ManyToManyField(Player, blank=True)
     points_earned = models.PositiveIntegerField(default=0)

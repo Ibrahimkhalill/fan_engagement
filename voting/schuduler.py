@@ -8,6 +8,10 @@ from match.serializers import MatchSerializer
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from django.conf import settings
+
+from pytz import UTC
+from datetime import datetime, timedelta
+from django.utils import timezone
 print(settings.TIME_ZONE)
 
 def match_status_scheduler():
@@ -22,9 +26,9 @@ def match_status_scheduler():
             for match in matches:
                 print(f"Checking match {match.id} status...")
                 print(f"Match date: {match.date}, time: {match.time}")
-                match_time = timezone.make_aware(
-                    timezone.datetime.combine(match.date, match.time)
-                )
+                match_time = datetime.combine(match.date, match.time)  # naive UTC
+                match_time = UTC.localize(match_time)  # aware UTC
+                
                 changed = False
 
                 # If match is upcoming and it's time to start → set to live
@@ -44,14 +48,15 @@ def match_status_scheduler():
                     serializer = MatchSerializer(match)
 
                     # Send update to dynamic group for this match
-                    group_name = f"match_status_{match.id}"
+                    group_name = "match_status_all"
                     channel_layer = get_channel_layer()
 
                     async_to_sync(channel_layer.group_send)(
                         group_name,
                         {
-                            "type": "match_status_update",  # match function name in consumer
-                            "data": serializer.data,
+                            "type": "match_status_update",
+                            "match_id": match.id,
+                            # you can also send minimal data if you want
                         }
                     )
             print("Match status updated.")

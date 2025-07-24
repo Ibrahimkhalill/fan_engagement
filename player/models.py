@@ -8,7 +8,7 @@ from django.core.validators import MinValueValidator
 class Player(models.Model):
     image = models.ImageField(upload_to='players/', blank=True, null=True)
     name = models.CharField(max_length=100)
-    jersey_number = models.PositiveIntegerField(unique=True)
+    jersey_number = models.PositiveIntegerField(blank=True, null=True)
     status = models.CharField(blank=True, null=True)
 
     def __str__(self):
