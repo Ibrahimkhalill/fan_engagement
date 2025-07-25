@@ -21,8 +21,10 @@ def match_status_scheduler():
             now = timezone.localtime()
             print(f"Current time: {now}")
             matches = Match.objects.filter(status__in=["upcoming", "live"])
-            print(f"Found {matches.count()} matches to check status.", matches, matches[0].id)  
-
+            if not matches:
+                print("No matches to check status.")
+                time.sleep(30)
+           
             for match in matches:
                 print(f"Checking match {match.id} status...")
                 print(f"Match date: {match.date}, time: {match.time}")
