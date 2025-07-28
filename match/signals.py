@@ -17,6 +17,11 @@ def update_voting_points(sender, instance, created, raw, **kwargs):
     # Skip if raw (e.g., fixtures), not finished, no winner, or instance is deleted
     if raw or instance.status != 'finished' or not instance.winner:
         return
+    
+      # ❗ Skip if already calculated
+    if instance.points_calculated:
+        logger.info(f"Points already calculated for match {instance.id}, skipping.")
+        return
 
     # Check if the Match instance still exists in the database
     try:
@@ -44,8 +49,16 @@ def update_voting_points(sender, instance, created, raw, **kwargs):
             
             print(f"Votes for match {instance.id}: {vote_counts}, Majority: {majority_team}")
 
-            # Update points for each vote
-            for vote in Voting.objects.filter(match=instance):
+            # Update points for each unique vote (skip duplicate user votes)
+            seen_users = set()
+            all_votes = Voting.objects.filter(match=instance).select_related('user')
+
+            for vote in all_votes:
+                if vote.user_id in seen_users:
+                    logger.warning(f"Duplicate vote detected for user {vote.user_id} in match {instance.id}, skipping.")
+                    continue
+                seen_users.add(vote.user_id)
+
                 points = 0
                 if vote.who_will_win == instance.winner:
                     points += 1  # 1 point for correct winner
@@ -55,15 +68,19 @@ def update_voting_points(sender, instance, created, raw, **kwargs):
                         instance.goal_difference is not None and 
                         vote.goal_difference == instance.goal_difference):
                         points += 1  # 1 additional point for correct goal difference
-                
+
                 vote.points_earned = points
                 vote.save(update_fields=['points_earned'])
 
                 # Update Fan points
-                fan, created = Fan.objects.get_or_create(user=vote.user)
+                fan, _ = Fan.objects.get_or_create(user=vote.user)
                 fan.points += points
                 fan.save(update_fields=['points'])
-             
+                
+            instance.points_calculated = True
+            instance.save(update_fields=["points_calculated"])
+
+            # WebSocket notify all clients
             group_name = "match_status_all"
             channel_layer = get_channel_layer()
 
@@ -73,7 +90,7 @@ def update_voting_points(sender, instance, created, raw, **kwargs):
                     "type": "match_status_update",
                     "match_id": instance.id,
                 }
-            )    
+            )
 
             logger.info(f"Points updated for match {instance.id} ({instance.team_a} vs {instance.team_b}) - Winner: {instance.winner}, Majority: {majority_team}, Votes: {vote_counts}")
     except Exception as e:

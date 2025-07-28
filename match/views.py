@@ -101,6 +101,21 @@ def live_match_filter(request):
         live_serializer.data,status=status.HTTP_200_OK)
 
 
+
+@api_view(['GET'])
+def finished_match_filter(request):
+
+    # Filter live and upcoming matches
+    live_matches = Match.objects.filter(
+        status='finished'
+    ).order_by('date', 'time')
+
+    # Serialize data
+    finished_serializer = MatchSerializer(live_matches, many=True)
+    
+    return Response(
+        finished_serializer.data,status=status.HTTP_200_OK)
+
 @api_view(['GET'])
 def upcoming_match_filter(request):
    

@@ -10,11 +10,11 @@ class Voting(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, blank=True,null=True)
     match = models.ForeignKey(Match, on_delete=models.CASCADE,blank=True,null=True)  # Link to Match
     who_will_win = models.CharField(max_length=100, choices=[('team_a', 'Team A'), ('team_b', 'Team B'), ('draw','Draw')], blank=True, null=True)  # Team A or B
-    goal_difference = models.IntegerField(default=0)  # Positive for Team A, negative for Team B
+    goal_difference = models.IntegerField(null=True, blank=True)  # null if no diff specified
     selected_players = models.ManyToManyField(Player, blank=True)
     points_earned = models.PositiveIntegerField(default=0)
-    # def __str__(self):
-    #     return f"Vote by {self.user.email} for {self.match}"
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+
 
     def clean(self):
         from django.core.exceptions import ValidationError
@@ -24,6 +24,8 @@ class Voting(models.Model):
         for player in self.selected_players.all():
             if player not in self.match.selected_players.all():
                 raise ValidationError(f"Player {player.name} is not in this match.")
+    class Meta:
+         unique_together = ('user', 'match')
             
 
 class Fan(models.Model):

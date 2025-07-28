@@ -11,6 +11,8 @@ from authentications.models import *
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from .utils import get_vote_stats  # Import the utility function
+from django.db import IntegrityError
+
 # Voting Views
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
@@ -83,7 +85,6 @@ def voting_detail(request, pk):
 # Optional: Template-based views for web interface
 
 
-# Voting View
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def vote_create(request):
@@ -105,9 +106,17 @@ def vote_create(request):
     except Match.DoesNotExist:
         return Response({"error": "Match not found"}, status=status.HTTP_404_NOT_FOUND)
 
+    # Check if user already voted for this match
+    existing_vote = Voting.objects.filter(user=request.user, match=match).first()
+    if existing_vote:
+        return Response({"error": "You have already voted for this match."}, status=status.HTTP_400_BAD_REQUEST)
+
     serializer = VotingSerializer(data=request.data, context={'request': request})
     if serializer.is_valid():
-        serializer.save()
+        try:
+            serializer.save()
+        except IntegrityError:
+            return Response({"error": "You have already voted for this match."}, status=status.HTTP_400_BAD_REQUEST)
         
         # Get updated vote stats
         stats = get_vote_stats(match_id)
@@ -125,6 +134,7 @@ def vote_create(request):
         )
         
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

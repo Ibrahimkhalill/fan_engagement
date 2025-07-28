@@ -36,6 +36,7 @@ class Match(models.Model):
         default='UTC',
         help_text='Timezone of the match (e.g., Asia/Dhaka, America/New_York)'
     )
+    points_calculated = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.team_a} vs {self.team_b} on {self.date}"
@@ -51,6 +52,7 @@ class Match(models.Model):
         else:
             self.win_name = None
         super().save(*args, **kwargs)
+    
 
     class Meta:
         ordering = ['date', 'time']
