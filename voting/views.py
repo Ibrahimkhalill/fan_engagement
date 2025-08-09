@@ -132,7 +132,6 @@ def vote_create(request):
                 'stats': stats
             }
         )
-        
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -196,8 +195,53 @@ def check_user_vote(request,match_id):
     else:
         return Response({"has_voted": False}, status=status.HTTP_200_OK)
     
-    
 
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def player_selection_stats(request, match_id):
+    match_votings = Voting.objects.filter(match_id=match_id).prefetch_related('selected_players')
+
+    if not match_votings.exists():
+        return Response({"message": "No votes found for this match."}, status=status.HTTP_404_NOT_FOUND)
+
+    total_selections = 0
+    player_counts = {}
+
+    for vote in match_votings:
+        for player in vote.selected_players.all():
+            if player.id not in player_counts:
+                player_counts[player.id] = {
+                    "count": 0,
+                    "name": player.name,
+                    "jersey": player.jersey_number,
+                    "image": request.build_absolute_uri(player.image.url) if player.image else None,
+                }
+            player_counts[player.id]["count"] += 1
+            total_selections += 1
+
+    if total_selections == 0:
+        return Response({"message": "No player selections found for this match."}, status=status.HTTP_404_NOT_FOUND)
+
+    all_players = [
+        {
+            "id": player_id,
+            "name": data["name"],
+            "jersey_number": data["jersey"],
+            "image": data["image"],
+            "selected_count": data["count"],
+            "percentage": round((data["count"] / total_selections) * 100, 2)
+        }
+        for player_id, data in player_counts.items()
+    ]
+
+    # Sort all players by highest selected percentage
+    top_3_players = sorted(all_players, key=lambda x: x['percentage'], reverse=True)[:3]
+
+    return Response({
+        "all_players": all_players,
+        "top_3_players": top_3_players
+    }, status=status.HTTP_200_OK)
 
 
 

@@ -13,5 +13,8 @@ urlpatterns = [
       # New endpoint
     path('fans/me/', views.fan_points, name='fan-points'),
     path('fans/leaderboard/', views.fan_leaderboard, name='fan-leaderboard'),
+    
+    
+    path('player-selection-stats/<int:match_id>/', views.player_selection_stats, name='player-selection-stats'),
 ]
 

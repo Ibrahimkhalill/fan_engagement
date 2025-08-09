@@ -12,8 +12,7 @@ class Match(models.Model):
     team_b_pics =  models.ImageField(
         upload_to='matches/', blank=True, null=True,
     )
-    time = models.TimeField()
-    date = models.DateField()
+    date_time = models.DateTimeField(blank=True, null=True)
     selected_players = models.ManyToManyField(Player, blank=True)
     winner = models.CharField(
         max_length=20,
@@ -39,7 +38,7 @@ class Match(models.Model):
     points_calculated = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.team_a} vs {self.team_b} on {self.date}"
+        return f"{self.team_a} vs {self.team_b} on {self.date_time}"
 
     def save(self, *args, **kwargs):
         # Auto-set win_name based on winner
@@ -55,8 +54,8 @@ class Match(models.Model):
     
 
     class Meta:
-        ordering = ['date', 'time']
+        ordering = ['date_time']
         indexes = [
-            models.Index(fields=['date', 'time']),
+            models.Index(fields=['date_time']),
             models.Index(fields=['status']),
         ]

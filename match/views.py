@@ -70,11 +70,11 @@ def match_filter(request):
     # Filter live and upcoming matches
     live_matches = Match.objects.filter(
         status='live'
-    ).order_by('date', 'time')
+    ).order_by('date_time')
 
     upcoming_matches = Match.objects.filter(
         status='upcoming'
-    ).order_by('date', 'time')
+    ).order_by('date_time')
 
     # Serialize data
     live_serializer = MatchSerializer(live_matches, many=True)
@@ -92,7 +92,7 @@ def live_match_filter(request):
     # Filter live and upcoming matches
     live_matches = Match.objects.filter(
         status='live'
-    ).order_by('date', 'time')
+    ).order_by('date_time')
 
     # Serialize data
     live_serializer = MatchSerializer(live_matches, many=True)
@@ -108,7 +108,7 @@ def finished_match_filter(request):
     # Filter live and upcoming matches
     live_matches = Match.objects.filter(
         status='finished'
-    ).order_by('date', 'time')
+    ).order_by('date_time')
 
     # Serialize data
     finished_serializer = MatchSerializer(live_matches, many=True)
@@ -123,7 +123,7 @@ def upcoming_match_filter(request):
     upcoming_matches = Match.objects.filter(
        
         status='upcoming'
-    ).order_by('date', 'time')
+    ).order_by('date_time')
 
     # Serialize data
     upcoming_serializer = MatchSerializer(upcoming_matches, many=True)
