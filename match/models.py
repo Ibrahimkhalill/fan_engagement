@@ -7,10 +7,16 @@ class Match(models.Model):
     team_a = models.CharField(max_length=100)
     team_b = models.CharField(max_length=100)
     team_a_pics = models.ImageField(
-        upload_to='matches/', blank=True, null=True,
-    )
-    team_b_pics =  models.ImageField(
-        upload_to='matches/', blank=True, null=True,
+    upload_to='matches/',
+    blank=True,
+    null=True,
+    max_length=1000  # practically almost unlimited
+)
+    team_b_pics = models.ImageField(
+        upload_to='matches/',
+        blank=True,
+        null=True,
+        max_length=1000
     )
     date_time = models.DateTimeField(blank=True, null=True)
     selected_players = models.ManyToManyField(Player, blank=True)
