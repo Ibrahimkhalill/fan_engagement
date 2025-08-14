@@ -36,6 +36,11 @@ def match_status_scheduler():
                 elif match.status == "live" and now >= match.date_time + timedelta(hours=2):
                     match.status = "finished"
                     changed = True
+                    
+                # upcoming → finished (missed match)
+                elif match.status == "upcoming" and now >= match.date_time + timedelta(hours=2):
+                    match.status = "finished"
+                    changed = True
 
                 if changed:
                     match.save()
