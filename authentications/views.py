@@ -87,6 +87,40 @@ def login(request):
         }, status=status.HTTP_200_OK)
     return error_response(code=401, details=serializer.errors)
 
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def user_login(request):
+    serializer = LoginSerializer(data=request.data)
+    if serializer.is_valid():
+        user = serializer.validated_data
+
+        # Prevent admin login
+        if user.role == 'admin':  # or use user.is_staff / user.is_superuser depending on your model
+            return Response({
+                "error": "You are not allowed. User not valid."
+            }, status=status.HTTP_401_UNAUTHORIZED)
+
+        refresh = RefreshToken.for_user(user)
+
+        try:
+            is_verified = user.is_verified
+            profile = user.user_profile
+        except UserProfile.DoesNotExist:
+            profile = UserProfile.objects.create(user=user, name=user.email.split('@')[0])
+
+        profile_serializer = UserProfileSerializer(profile)
+        return Response({
+            "access_token": str(refresh.access_token),
+            "refresh_token": str(refresh),
+            "role": user.role,
+            "is_verified": is_verified,
+            "profile": profile_serializer.data
+        }, status=status.HTTP_200_OK)
+
+    return error_response(code=401, details=serializer.errors)
+
+
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
 def list_users(request):
