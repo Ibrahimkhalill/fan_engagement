@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, IsAdminUser  # Corrected to IsAdminUser
 from .models import  Match
-from .serializers import  MatchSerializer
+from .serializers import  MatchSerializer , MatchCreateSerializer
 from datetime import datetime, time, timedelta
 from django.utils import timezone
 from django.db import models
@@ -13,15 +13,16 @@ from asgiref.sync import async_to_sync
 
 # Match Views
 @api_view(['GET', 'POST'])
+@permission_classes([IsAdminUser])  # Admin for POST
 def match_list_create(request):
     if request.method == 'GET':
         matches = Match.objects.all()
-        serializer = MatchSerializer(matches, many=True)
+        serializer = MatchCreateSerializer(matches, many=True)
         return Response(serializer.data)
     
     elif request.method == 'POST':
         print("data", request.data)
-        serializer = MatchSerializer(data=request.data)
+        serializer = MatchCreateSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -36,11 +37,11 @@ def match_detail(request, pk):
         return Response(status=status.HTTP_404_NOT_FOUND)
     
     if request.method == 'GET':
-        serializer = MatchSerializer(match)
+        serializer = MatchCreateSerializer(match)
         return Response(serializer.data)
     
     elif request.method == 'PUT':
-        serializer = MatchSerializer(match, data=request.data, partial=True)
+        serializer = MatchCreateSerializer(match, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             group_name = "match_status_all"
@@ -64,6 +65,7 @@ def match_detail(request, pk):
 
 # New API: Filter Live and Upcoming Matches
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])  # Only authenticated users can access
 def match_filter(request):
 
 
@@ -77,8 +79,8 @@ def match_filter(request):
     ).order_by('date_time')
 
     # Serialize data
-    live_serializer = MatchSerializer(live_matches, many=True)
-    upcoming_serializer = MatchSerializer(upcoming_matches, many=True)
+    live_serializer = MatchSerializer(live_matches, many=True,  context={'request': request})
+    upcoming_serializer = MatchSerializer(upcoming_matches, many=True , context={'request': request})
 
     return Response({
         'live_matches': live_serializer.data,
@@ -87,6 +89,7 @@ def match_filter(request):
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])  # Only authenticated users can access
 def live_match_filter(request):
 
     # Filter live and upcoming matches
@@ -95,7 +98,7 @@ def live_match_filter(request):
     ).order_by('date_time')
 
     # Serialize data
-    live_serializer = MatchSerializer(live_matches, many=True)
+    live_serializer = MatchSerializer(live_matches, many=True, context={'request': request})
     
     return Response(
         live_serializer.data,status=status.HTTP_200_OK)
@@ -103,6 +106,7 @@ def live_match_filter(request):
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])  # Only authenticated users can access
 def finished_match_filter(request):
 
     # Filter live and upcoming matches
@@ -111,12 +115,13 @@ def finished_match_filter(request):
     ).order_by('date_time')
 
     # Serialize data
-    finished_serializer = MatchSerializer(live_matches, many=True)
+    finished_serializer = MatchSerializer(live_matches, many=True, context={'request': request})
     
     return Response(
         finished_serializer.data,status=status.HTTP_200_OK)
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])  # Only authenticated users can access
 def upcoming_match_filter(request):
    
     # Fetch upcoming matches, sorted by date and time (earliest first)
@@ -126,7 +131,7 @@ def upcoming_match_filter(request):
     ).order_by('date_time')
 
     # Serialize data
-    upcoming_serializer = MatchSerializer(upcoming_matches, many=True)
+    upcoming_serializer = MatchSerializer(upcoming_matches, many=True, context={'request': request})
 
     return Response(
      

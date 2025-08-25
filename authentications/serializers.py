@@ -5,6 +5,13 @@ from payment.models import Subscription
 
 User = get_user_model()
 
+class RelativeImageField(serializers.ImageField):
+    def to_representation(self, value):
+        if not value:
+            return None
+        # শুধু /media/... path return করবে
+        return f"/media/{value.name}"
+
 class CustomUserSerializer(serializers.ModelSerializer):
     user_profile = serializers.SerializerMethodField()
 
@@ -78,6 +85,7 @@ class OTPSerializer(serializers.ModelSerializer):
         return data
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    profile_picture = RelativeImageField()
     class Meta:
         model = UserProfile
         fields = ['id', 'user', 'name', 'profile_picture', 'phone_number', 'joined_date']

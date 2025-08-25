@@ -20,11 +20,12 @@ class VotingSerializer(serializers.ModelSerializer):
     selected_players_ids = serializers.PrimaryKeyRelatedField(
         queryset=Player.objects.all(), source='selected_players', many=True, write_only=True, required=False
     )
+    top_players = serializers.SerializerMethodField()  # 👈 add here
     
 
     class Meta:
         model = Voting
-        fields = ['id', 'user', 'match', 'who_will_win', 'goal_difference', 'selected_players', 'selected_players_ids', 'points_earned']
+        fields = ['id', 'user', 'match', 'who_will_win', 'goal_difference', 'selected_players', 'selected_players_ids', 'points_earned','top_players']
         read_only_fields = ['id', 'user', 'points_earned']
 
     def validate(self, data):
@@ -79,6 +80,38 @@ class VotingSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         validated_data['user'] = user
         return super().create(validated_data)
+    
+    def get_top_players(self, obj):
+        # সব vote এই ম্যাচের
+        votes = Voting.objects.filter(match=obj.match).prefetch_related("selected_players")
+        from collections import Counter
+        player_count = Counter()
+
+        for vote in votes:
+            for player in vote.selected_players.all():
+                player_count[player.id] += 1
+
+        total_selections = sum(player_count.values())
+        if total_selections == 0:
+            return []
+
+        top_three = player_count.most_common(3)
+        results = []
+        for player_id, count in top_three:
+            try:
+                player = Player.objects.get(id=player_id)
+                percentage = round((count / total_selections) * 100, 2)
+                results.append({
+                    "id": player.id,
+                    "name": player.name,
+                    'image' : player.image.url if player.image else None,
+                    "selections": count,
+                    "percentage": percentage
+                })
+            except Player.DoesNotExist:
+                continue
+
+        return results
     
 class FanSerializer(serializers.ModelSerializer):
     user = CustomUserSerializer(read_only=True)

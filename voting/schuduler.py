@@ -3,7 +3,6 @@ import time
 from datetime import timedelta
 from django.utils import timezone
 from match.models import Match
-from match.serializers import MatchSerializer
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
@@ -15,14 +14,14 @@ def match_status_scheduler():
             now = timezone.now()  # UTC-aware
             print(f"Current UTC time: {now}")
 
-            matches = Match.objects.filter(status__in=["upcoming", "live"])
+            matches = Match.objects.filter(status__in=["upcoming", "live", "finished"])
             if not matches:
                 print("No matches to check status.")
                 time.sleep(30)
                 continue
 
             for match in matches:
-                print(f"Checking match {match.id} status...")
+                print(f"Checking match {match.id} status... ({match.status})")
                 print(f"Match datetime (UTC in DB): {match.date_time}")
 
                 changed = False
@@ -41,6 +40,14 @@ def match_status_scheduler():
                 elif match.status == "upcoming" and now >= match.date_time + timedelta(hours=2):
                     match.status = "finished"
                     changed = True
+
+                # finished → delete after 1 day
+                elif match.status == "finished" and now >= match.date_time + timedelta(hours=26):  
+                    # match time + 2 hours (duration) + 24 hours grace = 26 hours
+                    match_id = match.id
+                    match.delete()
+                    print(f"Match {match_id} deleted (finished + 1 day passed)")
+                    continue  # move to next match
 
                 if changed:
                     match.save()
