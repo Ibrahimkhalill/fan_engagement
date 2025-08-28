@@ -3,15 +3,16 @@ from player.models import Player
 from django.contrib.auth import get_user_model
 User = get_user_model()
 
+
 class Match(models.Model):
     team_a = models.CharField(max_length=100)
     team_b = models.CharField(max_length=100)
     team_a_pics = models.ImageField(
-    upload_to='matches/',
-    blank=True,
-    null=True,
-    max_length=1000  # practically almost unlimited
-)
+        upload_to='matches/',
+        blank=True,
+        null=True,
+        max_length=1000  # practically almost unlimited
+    )
     team_b_pics = models.ImageField(
         upload_to='matches/',
         blank=True,
@@ -29,12 +30,14 @@ class Match(models.Model):
     goal_difference = models.IntegerField(default=0, blank=True, null=True)
     status = models.CharField(
         max_length=20,
-        choices=[('upcoming', 'Upcoming'), ('live', 'Live'), ('finished', 'Finished')],
+        choices=[('upcoming', 'Upcoming'), ('live', 'Live'),
+                 ('finished', 'Finished'), ('inactive', 'Inactive')],
         default='upcoming',
-        blank=True,null=True
+        blank=True, null=True
     )
-    win_name = models.CharField(max_length=100, blank=True, null=True)  # Stores winning team name
-    
+    # Stores winning team name
+    win_name = models.CharField(max_length=100, blank=True, null=True)
+
     # Add this field to store match timezone as a string, default to UTC
     match_timezone = models.CharField(
         max_length=50,
@@ -57,7 +60,6 @@ class Match(models.Model):
         else:
             self.win_name = None
         super().save(*args, **kwargs)
-    
 
     class Meta:
         ordering = ['date_time']
